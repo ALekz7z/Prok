@@ -1,24 +1,46 @@
 #!/usr/bin/env python3
 """
 Программа для автоматической проверки прокси из списка.
-Проверяет работоспособность прокси и выводит результаты.
+Загружает прокси из файла proxies.txt, проверяет работоспособность 
+и сохраняет рабочие прокси в файл working_proxies.txt с кавычками.
 """
 
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+import os
 
-# Список прокси для проверки (формат: "ip:port" или "ip:port:username:password")
-PROXY_LIST = [
-    "127.0.0.1:8080",
-    # Добавьте свои прокси сюда
-]
+# Файл с исходными прокси (формат: ip:port, каждая строка)
+PROXIES_FILE = "proxies.txt"
+
+# Файл для сохранения рабочих прокси (с кавычками)
+OUTPUT_FILE = "working_proxies.txt"
 
 # Тестовый URL для проверки
 TEST_URL = "https://httpbin.org/ip"
 
 # Таймаут подключения в секундах
 TIMEOUT = 5
+
+
+def load_proxies_from_file(filename):
+    """
+    Загружает прокси из файла.
+    
+    Args:
+        filename: Имя файла со списком прокси
+    
+    Returns:
+        list: Список прокси
+    """
+    if not os.path.exists(filename):
+        print(f"Файл {filename} не найден!")
+        return []
+    
+    with open(filename, "r", encoding="utf-8") as f:
+        proxies = [line.strip() for line in f if line.strip()]
+    
+    return proxies
 
 
 def check_proxy(proxy):
@@ -44,14 +66,14 @@ def check_proxy(proxy):
         
         if len(parts) == 2:
             # Прокси без авторизации: ip:port
-            proxies = {
+            proxies_dict = {
                 "http": f"http://{proxy}",
                 "https": f"http://{proxy}"
             }
         elif len(parts) == 4:
             # Прокси с авторизацией: ip:port:username:password
             ip, port, username, password = parts
-            proxies = {
+            proxies_dict = {
                 "http": f"http://{username}:{password}@{ip}:{port}",
                 "https": f"http://{username}:{password}@{ip}:{port}"
             }
@@ -63,7 +85,7 @@ def check_proxy(proxy):
         
         response = requests.get(
             TEST_URL,
-            proxies=proxies,
+            proxies=proxies_dict,
             timeout=TIMEOUT
         )
         
@@ -94,12 +116,16 @@ def main():
     print("=" * 60)
     print(f"Тестовый URL: {TEST_URL}")
     print(f"Таймаут: {TIMEOUT} сек")
-    print(f"Всего прокси: {len(PROXY_LIST)}")
-    print("=" * 60)
+    
+    # Загрузка прокси из файла
+    PROXY_LIST = load_proxies_from_file(PROXIES_FILE)
     
     if not PROXY_LIST:
-        print("\nСписок прокси пуст! Добавьте прокси в переменную PROXY_LIST.")
+        print(f"\nСписок прокси пуст! Добавьте прокси в файл {PROXIES_FILE}")
         return
+    
+    print(f"Всего прокси: {len(PROXY_LIST)}")
+    print("=" * 60)
     
     working_proxies = []
     results = []
@@ -137,13 +163,14 @@ def main():
     if working_proxies:
         print("\nРабочие прокси:")
         for proxy in working_proxies:
-            print(f"  - {proxy}")
+            print(f'  - "{proxy}"')
     
-    # Сохранение рабочих прокси в файл
+    # Сохранение рабочих прокси в файл с кавычками
     if working_proxies:
-        with open("working_proxies.txt", "w") as f:
-            f.write("\n".join(working_proxies))
-        print(f"\nРабочие прокси сохранены в файл: working_proxies.txt")
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            for proxy in working_proxies:
+                f.write(f'"{proxy}"\n')
+        print(f"\nРабочие прокси сохранены в файл: {OUTPUT_FILE} (с кавычками)")
 
 
 if __name__ == "__main__":

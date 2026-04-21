@@ -1,3 +1,28 @@
 ```
-proxies.txt
+# Environment and config files
+.env
+.env.local
+*.env.*
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Editors and IDE
+.vscode/
+.idea/
+
+# Dependencies
+.venv/
+venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+node_modules/
+
+# Build artifacts
+dist/
+build/
+target/
 ```
