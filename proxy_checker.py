@@ -165,12 +165,14 @@ def main():
         for proxy in working_proxies:
             print(f'  - "{proxy}"')
     
-    # Сохранение рабочих прокси в файл с кавычками
+    # Сохранение рабочих прокси в файл с кавычками и пингом
     if working_proxies:
         with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-            for proxy in working_proxies:
-                f.write(f'"{proxy}"\n')
-        print(f"\nРабочие прокси сохранены в файл: {OUTPUT_FILE} (с кавычками)")
+            for result in results:
+                if result["working"]:
+                    ping_ms = round(result["response_time"] * 1000)
+                    f.write(f'"{result["proxy"]}" - ping: {ping_ms}ms\n')
+        print(f"\nРабочие прокси сохранены в файл: {OUTPUT_FILE} (с кавычками и пингом)")
 
 
 if __name__ == "__main__":
